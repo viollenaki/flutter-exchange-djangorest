@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password
 
 # Create your models here.
 class Event(models.Model):
@@ -30,15 +31,24 @@ class Currency(models.Model):
         verbose_name_plural = 'Currencies'
         ordering = ['name']
 
-class User(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    password = models.CharField(max_length=255)
 
-    def __str__(self):
-        return self.name
+
+class User(models.Model):  # Changed from AbstractBaseUser to models.Model
+    name = models.CharField(max_length=255)
+    email = models.EmailField(verbose_name='email address', max_length=255, unique=True)
+    password = models.CharField(max_length=128)  # For storing hashed passwords
     
     class Meta:
         db_table = 'users'
-        verbose_name = 'User'
-        verbose_name_plural = 'Users'
-        ordering = ['name']
+    
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+        
+    def save(self, *args, **kwargs):
+        if not self.password.startswith(('pbkdf2_sha256$', 'bcrypt$', 'argon2')):
+            # Если пароль еще не захеширован, хешируем его
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return self.email
