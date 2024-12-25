@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Event, Currency
+from .models import Event, Currency, User
 
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,3 +18,15 @@ class CurrencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Currency
         fields = '__all__'
+    
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+    
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user

@@ -7,12 +7,10 @@ from rest_framework.permissions import AllowAny
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.encoding import force_bytes, force_str
-from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.shortcuts import render
-
-from .models import Event, Currency, User  # Ensure this import is correct
-from .serializers import EventSerializer, CurrencySerializer
+from .models import Event, Currency, User
+from .serializers import EventSerializer, CurrencySerializer, UserSerializer
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -62,12 +60,130 @@ class EventList(generics.ListCreateAPIView):
             )
 
 class CurrencyList(generics.ListCreateAPIView):
-    # get only currency name for GET requests
     def get_queryset(self):
         if self.request.method == 'GET':
             return Currency.objects.values('name')
         return Currency.objects.all()
     serializer_class = CurrencySerializer
+
+    def delete(self, request, *args, **kwargs):        
+        currency_name = request.data.get('name')
+        try:
+            currency = Currency.objects.get(name=currency_name)
+            currency.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Currency.DoesNotExist:
+            logger.error(f"Currency with name {currency_name} not found")
+            return Response(
+            {"error": "Currency not found"}, 
+            status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error deleting currency: {str(e)}")
+            return Response(
+            {"error": "Failed to delete currency"}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    def put(self, request, *args, **kwargs):
+        currency_name = request.data.get('newName')
+        currency_old_name = request.data.get('oldName')
+        try:
+            currency = Currency.objects.get(name=currency_old_name)
+            currency.name = currency_name
+            currency.save()
+            return Response(status=status.HTTP_200_OK)
+        except Currency.DoesNotExist:
+            logger.error(f"Currency with name {currency_old_name} not found")
+            return Response(
+                {"error": "Currency not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error updating currency: {str(e)}")
+            return Response(
+                {"error": "Failed to update currency"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        
+class UsersList(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get(self, request, *args, **kwargs):
+        if not kwargs.get('username'):
+            return super().get(request, *args, **kwargs)
+        user_id = kwargs.get('username')
+        return Response(
+            UserSerializer(User.objects.get(name=user_id)).data, 
+            status=status.HTTP_200_OK
+        )
+    def post(self, request, *args, **kwargs):
+        logger.debug(f"Received POST data: {request.data}")
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.error(f"Validation errors: {serializer.errors}")
+        return Response(
+            {
+                "error": "Invalid data",
+                "details": serializer.errors
+            }, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def put(self, request, *args, **kwargs):
+        new_user_id = request.data.get('username')
+        old_user_id = request.data.get('oldUsername')
+        is_superuser = request.data.get('isSuperUser')
+        email = request.data.get('email')
+        logger.debug(is_superuser)
+        print(is_superuser)
+        if request.data.get('password'):
+            new_password = request.data.get('password')
+        else:
+            new_password = None
+        try:
+            user = User.objects.get(name=old_user_id)
+            if new_password:
+                user.set_password(new_password)
+            user.name = new_user_id
+            user.isSuperUser = True if is_superuser else False
+            user.email = email
+            user.save()
+            return Response(status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            logger.error(f"User with ID {old_user_id} not found")
+            return Response(
+                {"error": "User not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error updating user: {str(e)}")
+            return Response(
+                {"error": "Failed to update user"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def delete(self, request, *args, **kwargs):
+        user_id = request.data.get('username')
+        logger.debug(f"Attempting to delete user with ID: {user_id}")
+        try:
+            user = User.objects.get(name=user_id)
+            user.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except User.DoesNotExist:
+            logger.error(f"User with ID {user_id} not found")
+            return Response(
+                {"error": "User not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error deleting user: {str(e)}")
+            return Response(
+                {"error": "Failed to delete user"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class UserAuthentication(APIView):
     permission_classes = [AllowAny]
