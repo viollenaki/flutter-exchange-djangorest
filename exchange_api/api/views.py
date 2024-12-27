@@ -312,3 +312,18 @@ class PasswordResetConfirm(APIView):
             return False
         except Exception:
             return False
+
+class ClearAll(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        superAdminsList = User.objects.filter(isSuperUser=True)
+        for superAdmin in superAdminsList:
+            if superAdmin.name == username and check_password(password, superAdmin.password):
+                Event.objects.all().delete()
+                Currency.objects.all().delete()
+                return Response({"message": "Clear successful"}, status=status.HTTP_200_OK)
+        return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+    
