@@ -34,14 +34,14 @@ class EventList(generics.ListCreateAPIView):
             {
                 "error": "Invalid data",
                 "details": serializer.errors
-            }, 
+            },
             status=status.HTTP_400_BAD_REQUEST
         )
 
     def delete(self, request, *args, **kwargs):
         event_id = kwargs.get('pk')
         logger.debug(f"Attempting to delete event with ID: {event_id}")
-        
+
         try:
             event = Event.objects.get(pk=event_id)
             event.delete()
@@ -49,13 +49,13 @@ class EventList(generics.ListCreateAPIView):
         except Event.DoesNotExist:
             logger.error(f"Event with ID {event_id} not found")
             return Response(
-                {"error": "Event not found"}, 
+                {"error": "Event not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             logger.error(f"Error deleting event: {str(e)}")
             return Response(
-                {"error": "Failed to delete event"}, 
+                {"error": "Failed to delete event"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -66,7 +66,7 @@ class CurrencyList(generics.ListCreateAPIView):
         return Currency.objects.all()
     serializer_class = CurrencySerializer
 
-    def delete(self, request, *args, **kwargs):        
+    def delete(self, request, *args, **kwargs):
         currency_name = request.data.get('name')
         try:
             currency = Currency.objects.get(name=currency_name)
@@ -75,16 +75,16 @@ class CurrencyList(generics.ListCreateAPIView):
         except Currency.DoesNotExist:
             logger.error(f"Currency with name {currency_name} not found")
             return Response(
-            {"error": "Currency not found"}, 
+            {"error": "Currency not found"},
             status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             logger.error(f"Error deleting currency: {str(e)}")
             return Response(
-            {"error": "Failed to delete currency"}, 
+            {"error": "Failed to delete currency"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+
     def put(self, request, *args, **kwargs):
         currency_name = request.data.get('newName')
         currency_old_name = request.data.get('oldName')
@@ -104,7 +104,7 @@ class CurrencyList(generics.ListCreateAPIView):
                 {"error": "Failed to update currency"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        
+
 class UsersList(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -114,7 +114,7 @@ class UsersList(generics.ListCreateAPIView):
             return super().get(request, *args, **kwargs)
         user_id = kwargs.get('username')
         return Response(
-            UserSerializer(User.objects.get(name=user_id)).data, 
+            UserSerializer(User.objects.get(name=user_id)).data,
             status=status.HTTP_200_OK
         )
     def post(self, request, *args, **kwargs):
@@ -128,10 +128,10 @@ class UsersList(generics.ListCreateAPIView):
             {
                 "error": "Invalid data",
                 "details": serializer.errors
-            }, 
+            },
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     def put(self, request, *args, **kwargs):
         new_user_id = request.data.get('username')
         old_user_id = request.data.get('oldUsername')
@@ -155,13 +155,13 @@ class UsersList(generics.ListCreateAPIView):
         except User.DoesNotExist:
             logger.error(f"User with ID {old_user_id} not found")
             return Response(
-                {"error": "User not found"}, 
+                {"error": "User not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             logger.error(f"Error updating user: {str(e)}")
             return Response(
-                {"error": "Failed to update user"}, 
+                {"error": "Failed to update user"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -175,13 +175,13 @@ class UsersList(generics.ListCreateAPIView):
         except User.DoesNotExist:
             logger.error(f"User with ID {user_id} not found")
             return Response(
-                {"error": "User not found"}, 
+                {"error": "User not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             logger.error(f"Error deleting user: {str(e)}")
             return Response(
-                {"error": "Failed to delete user"}, 
+                {"error": "Failed to delete user"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -213,10 +213,11 @@ class PasswordResetRequest(APIView):
             reset_url = f"{request.scheme}://{request.get_host()}/api/v1/reset-password/{uid}/{token}"
             send_mail(
                 'Запрос на сброс пароля',
-                f'Для сброса пароля перейдите по ссылке: {reset_url}',
+                f'<h1>Сброс пароля</h1><br>Для сброса пароля перейдите по ссылке: {reset_url}',
                 settings.DEFAULT_FROM_EMAIL,
                 [email],
-                fail_silently=False
+                fail_silently=False,
+                   html_message=f'<html><body style="text-align: center; background: linear-gradient(158deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 60%, rgba(0,226,255,1) 100%); padding: 100px 0;"><h1 style="color:#3EA1F2; font-size: 32px">Сброс пароля.</h1><h3 style="color: white; font-size: 20px">Был запрошен сброс пароля для пользователя {user.name},<br><span style="color: #FF4545">если это были не вы, не реагируйте на это письмо.</span><br>Для сброса пароля нажмите кнопку ниже.</h3><a href="{reset_url}" style="color: #ffffff; text-decoration: none;"><button style="padding: 15px 50px; color: #ffffff; background: linear-gradient(90deg, #42A4F5, #2088E5); border-radius:10px; border: none">Cброс пароля</button></a></body></html>'
             )
             return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
@@ -258,7 +259,7 @@ class PasswordResetConfirm(APIView):
             if self.check_token(user, token):
                 password1 = request.POST.get('new_password1')
                 password2 = request.POST.get('new_password2')
-                
+
                 if not password1 or not password2:
                     return render(request, self.template_name, {
                         'validlink': True,
@@ -266,7 +267,7 @@ class PasswordResetConfirm(APIView):
                         'token': token,
                         'uidb64': uidb64
                     })
-                
+
                 if password1 != password2:
                     return render(request, self.template_name, {
                         'validlink': True,
@@ -274,7 +275,7 @@ class PasswordResetConfirm(APIView):
                         'token': token,
                         'uidb64': uidb64
                     })
-                
+
                 if len(password1) < 8:
                     return render(request, self.template_name, {
                         'validlink': True,
@@ -282,17 +283,17 @@ class PasswordResetConfirm(APIView):
                         'token': token,
                         'uidb64': uidb64
                     })
-                
+
                 user.set_password(password1)
                 user.save()
                 return render(request, self.template_name, {
                     'validlink': True,
                     'success': True
                 })
-                
+
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             pass
-            
+
         return render(request, self.template_name, {'validlink': False})
 
     def check_token(self, user, token):
