@@ -22,6 +22,30 @@ class EventList(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         logger.debug("Received GET request")
         return super().get(request, *args, **kwargs)
+    
+    def put(self, request, *args, **kwargs):
+        event_id = kwargs.get('pk')
+        try:
+            event = Event.objects.get(pk=event_id)
+            event.type = request.data.get('type')
+            event.currency = request.data.get('currency')
+            event.amount = request.data.get('amount')
+            event.rate = request.data.get('rate')
+            event.total = request.data.get('total')
+            event.save()
+            return Response(status=status.HTTP_200_OK)
+        except Event.DoesNotExist:
+            logger.error(f"Event with ID {event_id} not found")
+            return Response(
+                {"error": "Event not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error updating event: {str(e)}")
+            return Response(
+                {"error": "Failed to update event"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def post(self, request, *args, **kwargs):
         logger.debug(f"Received POST data: {request.data}")

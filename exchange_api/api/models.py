@@ -6,9 +6,12 @@ class Event(models.Model):
     type = models.CharField(max_length=255)
     currency = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateField()
+    date = models.CharField(max_length=5)  
     rate = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.type} - {self.currency} ({self.date})"
