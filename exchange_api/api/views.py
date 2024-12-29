@@ -347,7 +347,6 @@ class ClearAll(APIView):
         for superAdmin in superAdminsList:
             if superAdmin.name == username and check_password(password, superAdmin.password):
                 Event.objects.all().delete()
-                Currency.objects.all().delete()
                 return Response({"message": "Clear successful"}, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
     
