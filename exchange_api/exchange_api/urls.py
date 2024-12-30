@@ -34,6 +34,6 @@ urlpatterns = [
     path('api/v1/reset-password/<str:uidb64>/<str:token>', 
          PasswordResetConfirm.as_view(), name='password_reset_confirm'),
     path('api/v1/clear-all', ClearAll.as_view(), name='clearr-all'),
-    path('api/v1/super-user-check', isSuperAdmin.as_view, name='is-super-admin')
+    path('api/v1/super-user-check', isSuperAdmin.as_view(), name='is-super-admin')
 ]
 
