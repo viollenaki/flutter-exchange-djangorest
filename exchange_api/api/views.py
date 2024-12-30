@@ -138,15 +138,39 @@ class UsersList(generics.ListCreateAPIView):
             return super().get(request, *args, **kwargs)
         user_id = kwargs.get('username')
         return Response(
-            UserSerializer(User.objects.get(name=user_id)).data,
+            UserSerializer(User.objects.get(username=user_id)).data,
             status=status.HTTP_200_OK
         )
+
     def post(self, request, *args, **kwargs):
         logger.debug(f"Received POST data: {request.data}")
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        # Check if user already exists
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {
+                    "error": "User already exists",
+                    "details": "A user with this username already exists"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            self.perform_create(serializer)
+            # Get validated data
+            validated_data = serializer.validated_data
+            # Remove password from validated data
+            password = validated_data.pop('password', None)
+            # Create user instance
+            user = User(**validated_data)
+            # Set password properly to ensure it's hashed
+            user.set_password(password)
+            user.save()
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
         logger.error(f"Validation errors: {serializer.errors}")
         return Response(
             {
@@ -168,7 +192,7 @@ class UsersList(generics.ListCreateAPIView):
         else:
             new_password = None
         try:
-            user = User.objects.get(name=old_user_id)
+            user = User.objects.get(username=old_user_id)
             if new_password:
                 user.set_password(new_password)
             user.name = new_user_id
@@ -193,7 +217,7 @@ class UsersList(generics.ListCreateAPIView):
         user_id = request.data.get('username')
         logger.debug(f"Attempting to delete user with ID: {user_id}")
         try:
-            user = User.objects.get(name=user_id)
+            user = User.objects.get(username=user_id)
             user.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except User.DoesNotExist:
@@ -216,7 +240,7 @@ class UserAuthentication(APIView):
         username = request.data.get('username')
         password = request.data.get('password')
         try:
-            user = User.objects.get(name=username)
+            user = User.objects.get(username=username)
             if check_password(password, user.password):
                 return Response({"message": "Authentication successful"}, status=status.HTTP_200_OK)
             else:
@@ -344,9 +368,8 @@ class ClearAll(APIView):
         username = request.data.get('username')
         password = request.data.get('password')
         superAdminsList = User.objects.filter(isSuperUser=True)
-        for superAdmin in superAdminsList:
-            if superAdmin.name == username and check_password(password, superAdmin.password):
+        for superAdmin in superAdminsList: 
+            if superAdmin.username == username and check_password(password, superAdmin.password):
                 Event.objects.all().delete()
                 return Response({"message": "Clear successful"}, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
-    
