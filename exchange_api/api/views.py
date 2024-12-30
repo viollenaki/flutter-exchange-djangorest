@@ -378,7 +378,10 @@ class isSuperAdmin(APIView):
     permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         username = request.data.get('username')
-        superAdmin = User.objects.get(username=username)
+        try:
+            superAdmin = User.objects.get(username=username)
+        except:
+            return Response({"error": "Not superadmin"}, status=status.HTTP_400_BAD_REQUEST)
         if superAdmin.isSuperUser:
                 return Response(status=status.HTTP_204_NO_CONTENT)
         return Response({"error": "Not superadmin"}, status=status.HTTP_400_BAD_REQUEST)
