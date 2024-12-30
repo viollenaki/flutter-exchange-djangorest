@@ -151,7 +151,7 @@ class UsersList(generics.ListCreateAPIView):
         if User.objects.filter(username=username).exists():
             return Response(
                 {
-                    "error": "User already exists",
+                    "error": "Пользователь уже существует",
                     "details": "A user with this username already exists"
                 },
                 status=status.HTTP_400_BAD_REQUEST
@@ -195,7 +195,7 @@ class UsersList(generics.ListCreateAPIView):
             user = User.objects.get(username=old_user_id)
             if new_password:
                 user.set_password(new_password)
-            user.name = new_user_id
+            user.username = new_user_id
             user.isSuperUser = True if is_superuser else False
             user.email = email
             user.save()
@@ -373,3 +373,12 @@ class ClearAll(APIView):
                 Event.objects.all().delete()
                 return Response({"message": "Clear successful"}, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
+class isSuperAdmin(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        superAdmin = User.objects.get(username=username)
+        if superAdmin.isSuperAdmin:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"error": "Not superadmin"}, status=status.HTTP_400_BAD_REQUEST)
