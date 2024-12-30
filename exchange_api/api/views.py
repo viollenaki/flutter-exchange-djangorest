@@ -377,7 +377,7 @@ class ClearAll(APIView):
 class isSuperAdmin(APIView):
     permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
-        username = request.data.get('username')
+        username = kwargs.get('username')
         try:
             superAdmin = User.objects.get(username=username)
         except:
