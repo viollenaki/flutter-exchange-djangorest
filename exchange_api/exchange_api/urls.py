@@ -20,6 +20,14 @@ from api.views import (
     EventList, CurrencyList, UserAuthentication, 
     PasswordResetRequest, PasswordResetConfirm, UsersList, ClearAll, isSuperAdmin, testRenderResetTemplateUi
 )
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from api.serializers import CustomTokenObtainPairSerializer
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -35,6 +43,8 @@ urlpatterns = [
          PasswordResetConfirm.as_view(), name='password_reset_confirm'),
     path('api/v1/clear-all', ClearAll.as_view(), name='clearr-all'),
     path('api/v1/super-user-check/<str:username>', isSuperAdmin.as_view(), name='is-super-admin'),
-    path('api/v1/test-reset-template', testRenderResetTemplateUi.as_view(), name='test-reset-template')
+    path('api/v1/test-reset-template', testRenderResetTemplateUi.as_view(), name='test-reset-template'),
+    path('api/v1/token', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 

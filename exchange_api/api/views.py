@@ -3,7 +3,7 @@ from rest_framework.response import Response
 import logging
 from django.contrib.auth.hashers import check_password
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.encoding import force_bytes, force_str
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 class EventList(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Event.objects.all()
     serializer_class = EventSerializer
 
@@ -84,6 +85,7 @@ class EventList(generics.ListCreateAPIView):
             )
 
 class CurrencyList(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         if self.request.method == 'GET':
             return Currency.objects.values('name')
@@ -130,6 +132,7 @@ class CurrencyList(generics.ListCreateAPIView):
             )
 
 class UsersList(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -362,7 +365,7 @@ class PasswordResetConfirm(APIView):
             return False
 
 class ClearAll(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
@@ -375,7 +378,7 @@ class ClearAll(APIView):
         return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
 class isSuperAdmin(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
         username = kwargs.get('username')
         try:
