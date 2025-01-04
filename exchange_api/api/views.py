@@ -155,11 +155,28 @@ class UsersList(generics.ListCreateAPIView):
         if User.objects.filter(username=username).exists():
             return Response(
                 {
-                    "error": "Пользователь уже существует",
+                    "error": "Имя пользователя уже занято",
                     "details": "A user with this username already exists"
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        elif User.objects.filter(email=request.data.get('email')).exists():
+            return Response(
+                {
+                    "error": "Эта почта уже зарегистрирована",
+                    "details": "A user with this email already exists"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        elif User.objects.filter(phone=request.data.get('phone')).exists():
+            return Response(
+                {
+                    "error": "Этот номер уже зарегистрирован",
+                    "details": "A user with this phone number already exists"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
             
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
