@@ -12,6 +12,7 @@ from django.shortcuts import render
 from .models import Event, Currency, User
 from .serializers import EventSerializer, CurrencySerializer, UserSerializer
 from twilio.rest import Client
+from rest_framework_simplejwt.tokens import RefreshToken
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -263,7 +264,15 @@ class UserAuthentication(APIView):
         try:
             user = User.objects.get(username=username)
             if check_password(password, user.password):
-                return Response({"message": "Authentication successful"}, status=status.HTTP_200_OK)
+                # Generate token
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    "message": "Authentication successful",
+                    "tokens": {
+                        "refresh": str(refresh),
+                        "access": str(refresh.access_token),
+                    }
+                }, status=status.HTTP_200_OK)
             else:
                 return Response({"error": "Invalid password"}, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:

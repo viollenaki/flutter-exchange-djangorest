@@ -37,11 +37,14 @@ class Currency(models.Model):
 
 
 class User(models.Model):  # Changed from AbstractBaseUser to models.Model
-    username = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(verbose_name='email address', max_length=255, unique=True)
     password = models.CharField(max_length=128)
     phone = models.CharField(max_length=255, unique=True)  
     isSuperUser = models.BooleanField(default=False)
+    
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email', 'phone']
     
     class Meta:
         db_table = 'users'
@@ -57,3 +60,15 @@ class User(models.Model):  # Changed from AbstractBaseUser to models.Model
         
     def __str__(self):
         return self.email
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    @property
+    def is_authenticated(self):
+        return True
+    
+    @property
+    def is_active(self):
+        return True

@@ -55,4 +55,5 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
             else:
                 raise serializers.ValidationError('Неверный пароль')
         except User.DoesNotExist:
+            print('Пользователь не найден')
             raise serializers.ValidationError('Пользователь не найден')

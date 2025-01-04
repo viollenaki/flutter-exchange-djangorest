@@ -163,12 +163,16 @@ SIMPLE_JWT = {
 
     "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
-    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
-    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
-    "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
+    "TOKEN_VERIFY_SERIALIZER": "rest_framework.simplejwt.serializers.TokenVerifySerializer",
+    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework.simplejwt.serializers.TokenBlacklistSerializer",
+    "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework.simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework.simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
+AUTHENTICATION_BACKENDS = [
+    'api.backends.CustomBackend',
+    'django.contrib.auth.backends.ModelBackend',  # Keep if you still need Django's default auth
+]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -196,5 +200,4 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 
 TWILIO_ACCOUNT_SID = "AC3f3c16805769d31198d30c755c27b717"
 TWILIO_AUTH_TOKEN = "20868c2ae7bb6a2107c1cac230d52c86"
-# Remove or comment out this line
-# AUTH_USER_MODEL = 'api.User'
+AUTH_USER_MODEL = 'api.User'
