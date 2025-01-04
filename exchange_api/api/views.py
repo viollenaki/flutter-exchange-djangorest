@@ -11,6 +11,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.shortcuts import render
 from .models import Event, Currency, User
 from .serializers import EventSerializer, CurrencySerializer, UserSerializer
+from twilio.rest import Client
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -256,23 +257,47 @@ class PasswordResetRequest(APIView):
 
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
-        try:
-            user = User.objects.get(email=email)
-            # Use custom token generation instead of default_token_generator
-            token = self.generate_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_url = f"{request.scheme}://{request.get_host()}/api/v1/reset-password/{uid}/{token}"
-            send_mail(
-                'Запрос на сброс пароля',
-                f'<h1>Сброс пароля</h1><br>Для сброса пароля перейдите по ссылке: {reset_url}',
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False,
-                   html_message=f'<html><body style="text-align: center; background: linear-gradient(158deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 60%, rgba(0,226,255,1) 100%); padding: 100px 0;"><h1 style="color:#3EA1F2; font-size: 32px">Сброс пароля.</h1><h3 style="color: white; font-size: 20px">Был запрошен сброс пароля для пользователя {user.username},<br><span style="color: #FF4545">если это были не вы, не реагируйте на это письмо.</span><br>Для сброса пароля нажмите кнопку ниже.</h3><a href="{reset_url}" style="color: #ffffff; text-decoration: none;"><button style="padding: 15px 50px; color: #ffffff; background: linear-gradient(90deg, #42A4F5, #2088E5); border-radius:10px; border: none">Cброс пароля</button></a></body></html>'
-            )
-            return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if email.startswith("+") or "@" not in email:
+            try:
+                sid = settings.TWILIO_ACCOUNT_SID
+                token = settings.TWILIO_AUTH_TOKEN
+                client = Client(sid, token)
+                user = User.objects.get(phone=email)
+                # Use custom token generation instead of default_token_generator
+                token = self.generate_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                reset_url = f"{request.scheme}://{request.get_host()}/api/v1/reset-password/{uid}/{token}"
+
+                client.messages.create(
+                    body="Ваша ссылка для сброса пароля: " + reset_url,
+                    from_= "+1 707 735 0736",
+                    to=user.phone
+                )
+                
+                return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            try:
+                user = User.objects.get(email=email)
+                # Use custom token generation instead of default_token_generator
+                token = self.generate_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                reset_url = f"{request.scheme}://{request.get_host()}/api/v1/reset-password/{uid}/{token}"
+                send_mail(
+                    'Запрос на сброс пароля',
+                    f'<h1>Сброс пароля</h1><br>Для сброса пароля перейдите по ссылке: {reset_url}',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                    html_message=f'<html><body style="text-align: center; background: linear-gradient(158deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 60%, rgba(0,226,255,1) 100%); padding: 100px 0;"><h1 style="color:#3EA1F2; font-size: 32px">Сброс пароля.</h1><h3 style="color: white; font-size: 20px">Был запрошен сброс пароля для пользователя {user.username},<br><span style="color: #FF4545">если это были не вы, не реагируйте на это письмо.</span><br>Для сброса пароля нажмите кнопку ниже.</h3><a href="{reset_url}" style="color: #ffffff; text-decoration: none;"><button style="padding: 15px 50px; color: #ffffff; background: linear-gradient(90deg, #42A4F5, #2088E5); border-radius:10px; border: none">Cброс пароля</button></a></body></html>'
+                )
+                return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def generate_token(self, user):
         from hashlib import sha256

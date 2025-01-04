@@ -194,5 +194,7 @@ EMAIL_HOST_PASSWORD = 'gllw qqbl flug pxkn'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
+TWILIO_ACCOUNT_SID = "AC3f3c16805769d31198d30c755c27b717"
+TWILIO_AUTH_TOKEN = "20868c2ae7bb6a2107c1cac230d52c86"
 # Remove or comment out this line
 # AUTH_USER_MODEL = 'api.User'
