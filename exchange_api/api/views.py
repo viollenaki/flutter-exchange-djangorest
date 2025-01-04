@@ -267,14 +267,14 @@ class PasswordResetRequest(APIView):
                 # Use custom token generation instead of default_token_generator
                 token = self.generate_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
-                reset_url = f"{request.scheme}://{request.get_host()}/api/v1/reset-password/{uid}/{token}"
+                reset_url = f"{request.scheme}://{request.get_host()}/reset-password/{uid}/{token}"
 
                 client.messages.create(
                     body="Ваша ссылка для сброса пароля: " + reset_url,
                     from_= "+1 707 735 0736",
                     to=user.phone
                 )
-                
+
                 return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
             except User.DoesNotExist:
                 return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -283,10 +283,9 @@ class PasswordResetRequest(APIView):
         else:
             try:
                 user = User.objects.get(email=email)
-                # Use custom token generation instead of default_token_generator
                 token = self.generate_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
-                reset_url = f"{request.scheme}://{request.get_host()}/api/v1/reset-password/{uid}/{token}"
+                reset_url = f"{request.scheme}://{request.get_host()}/reset-password/{uid}/{token}"
                 send_mail(
                     'Запрос на сброс пароля',
                     f'<h1>Сброс пароля</h1><br>Для сброса пароля перейдите по ссылке: {reset_url}',

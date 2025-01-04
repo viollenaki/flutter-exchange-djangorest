@@ -39,7 +39,7 @@ urlpatterns = [
     path('api/v1/users', UsersList.as_view(), name='users'),
     path('api/v1/users/<str:username>', UsersList.as_view(), name='user-detail'),
     path('api/v1/password-reset', PasswordResetRequest.as_view(), name='password_reset'),
-    path('api/v1/reset-password/<str:uidb64>/<str:token>', 
+    path('reset-password/<str:uidb64>/<str:token>', 
          PasswordResetConfirm.as_view(), name='password_reset_confirm'),
     path('api/v1/clear-all', ClearAll.as_view(), name='clearr-all'),
     path('api/v1/super-user-check/<str:username>', isSuperAdmin.as_view(), name='is-super-admin'),
