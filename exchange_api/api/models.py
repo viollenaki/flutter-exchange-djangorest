@@ -99,4 +99,7 @@ class User(models.Model):
     def get_username(self):
         return self.username
 
+    def check_password(self, raw_password):
+        return make_password(raw_password) == self.password
+
     objects = UserManager()
