@@ -283,29 +283,33 @@ class PasswordResetRequest(APIView):
 
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
-
+        
         if email.startswith("+") or "@" not in email:
             try:
                 sid = settings.TWILIO_ACCOUNT_SID
                 token = settings.TWILIO_AUTH_TOKEN
                 client = Client(sid, token)
                 user = User.objects.get(phone=email)
+                print(user.phone)
                 # Use custom token generation instead of default_token_generator
                 token = self.generate_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 reset_url = f"{request.scheme}://{request.get_host()}/reset-password/{uid}/{token}"
+                print(reset_url)
+                
 
-                client.messages.create(
-                    body="Ваша ссылка для сброса пароля: " + reset_url,
-                    from_= "+1 707 735 0736",
-                    to=user.phone
-                )
-
-                return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
             except User.DoesNotExist:
                 return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-            except Exception as e:
+            except (Exception) as e:
                 return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            messages = client.messages.create(
+                    body="Ваша ссылка для сброса пароля: " + reset_url,
+                    from_= "+17077350736",
+                    to=user.phone
+                )
+            print(messages.sid, messages.status, messages.body)
+            return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
+
         else:
             try:
                 user = User.objects.get(email=email)
