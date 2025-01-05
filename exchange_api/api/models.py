@@ -95,5 +95,8 @@ class User(models.Model):
     
     def has_perm(self, perm, obj=None):
         return True
+    
+    def get_username(self):
+        return self.username
 
     objects = UserManager()
