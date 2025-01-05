@@ -170,7 +170,7 @@ SIMPLE_JWT = {
 }
 
 AUTHENTICATION_BACKENDS = [
-    'api.backends.CustomBackend',
+    'api.auth.CustomBackend',
     'django.contrib.auth.backends.ModelBackend',  # Keep if you still need Django's default auth
 ]
 

@@ -35,8 +35,21 @@ class Currency(models.Model):
         ordering = ['name']
 
 
+class UserManager(models.Manager):
+    def get_by_natural_key(self, username):
+        return self.get(**{self.model.USERNAME_FIELD: username})
 
-class User(models.Model):  # Changed from AbstractBaseUser to models.Model
+    def create_user(self, username, email, password=None, phone=None, **extra_fields):
+        user = self.model(username=username, email=email, phone=phone, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, password=None, phone=None, **extra_fields):
+        extra_fields.setdefault('isSuperUser', True)
+        return self.create_user(username, email, password, phone, **extra_fields)
+
+class User(models.Model): 
     username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(verbose_name='email address', max_length=255, unique=True)
     password = models.CharField(max_length=128)
@@ -72,3 +85,15 @@ class User(models.Model):  # Changed from AbstractBaseUser to models.Model
     @property
     def is_active(self):
         return True
+    
+    @property
+    def is_staff(self):
+        return self.isSuperUser
+
+    def has_module_perms(self, app_label):
+        return True
+    
+    def has_perm(self, perm, obj=None):
+        return True
+
+    objects = UserManager()
