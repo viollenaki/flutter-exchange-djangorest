@@ -218,7 +218,7 @@ class UsersList(generics.ListCreateAPIView):
             if new_password:
                 user.set_password(new_password)
             user.username = new_user_id
-            user.isSuperUser = True if is_superuser else False
+            user.is_superuser = True if is_superuser else False
             user.email = email
             user.save()
             return Response(status=status.HTTP_200_OK)
@@ -420,7 +420,7 @@ class ClearAll(APIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
-        superAdminsList = User.objects.filter(isSuperUser=True)
+        superAdminsList = User.objects.filter(is_superuser=True)
         for superAdmin in superAdminsList: 
             if superAdmin.username == username and check_password(password, superAdmin.password):
                 Event.objects.all().delete()
@@ -435,7 +435,7 @@ class isSuperAdmin(APIView):
             superAdmin = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "Not superadmin"}, status=status.HTTP_400_BAD_REQUEST)
-        if superAdmin.isSuperUser:
+        if superAdmin.is_superuser:
                 return Response(status=status.HTTP_204_NO_CONTENT)
         return Response({"error": "Not superadmin"}, status=status.HTTP_400_BAD_REQUEST)
     

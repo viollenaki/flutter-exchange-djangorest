@@ -46,7 +46,7 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
                 refresh['user_id'] = user.id
                 refresh['username'] = user.username
                 refresh['email'] = user.email
-                refresh['is_superuser'] = user.isSuperUser
+                refresh['is_superuser'] = user.is_superuser
 
                 return {
                     'refresh': str(refresh),

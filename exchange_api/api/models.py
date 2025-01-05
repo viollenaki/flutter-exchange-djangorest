@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Group, Permission
 
 # Create your models here.
 class Event(models.Model):
@@ -46,7 +47,7 @@ class UserManager(models.Manager):
         return user
 
     def create_superuser(self, username, email, password=None, phone=None, **extra_fields):
-        extra_fields.setdefault('isSuperUser', True)
+        extra_fields.setdefault('is_superuser', True)
         return self.create_user(username, email, password, phone, **extra_fields)
 
 class User(models.Model): 
@@ -54,7 +55,19 @@ class User(models.Model):
     email = models.EmailField(verbose_name='email address', max_length=255, unique=True)
     password = models.CharField(max_length=128)
     phone = models.CharField(max_length=255, unique=True)  
-    isSuperUser = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    groups = models.ManyToManyField(
+        Group,
+        blank=True,
+        related_name='user_set',
+        related_query_name='user'
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        blank=True,
+        related_name='user_set',
+        related_query_name='user'
+    )
     
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'phone']
@@ -88,7 +101,7 @@ class User(models.Model):
     
     @property
     def is_staff(self):
-        return self.isSuperUser
+        return self.is_superuser
 
     def has_module_perms(self, app_label):
         return True
